@@ -8,7 +8,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Date;
 
-public class Webserver {
+public class Webserver extends Thread{
 	
 	public boolean online = false;	
 	public ArrayList<Socket> clients = new ArrayList<Socket>();
@@ -21,7 +21,7 @@ public class Webserver {
 		this.port = port;
 	}
 	
-	public void start() throws Exception
+	public void startServer() throws Exception
 	{
 		System.out.println("[WEBSERVER] Setting serverstatus to ONLINE!");
 		server = new ServerSocket(this.port);
@@ -32,7 +32,7 @@ public class Webserver {
 		}
 	}
 	
-	public void stop() throws Exception
+	public void stopServer() throws Exception
 	{
 		System.out.println("[WEBSERVER] Setting serverstatus to OFFLINE!");
 		server.close();
@@ -43,32 +43,41 @@ public class Webserver {
 	{
 		return this.online;
 	}
-	
-	public void handlePackets() throws Exception
+
+	@Override
+	public void run()
 	{
-		Socket client = server.accept();
-		clients.add(client);
-		
-		PrintWriter w = new PrintWriter(client.getOutputStream());
-		BufferedOutputStream dataOut = new BufferedOutputStream(client.getOutputStream());
-		byte[] data = this.toByteArray(this.response);
-		
-		w.println("HTTP/1.1 200 OK");
-		w.println("Server: Java HTTP Webserver from MCTzOCK : 1.0");
-		w.println("Date: " + new Date());
-		w.println("Content-type: text/html");
-		w.println("Content-lenght: " + this.response.length());
-		w.println();
-		w.flush();
-		
-		dataOut.write(data);
-		dataOut.flush();
-		
-		w.close();
-		dataOut.close();
-		
-		client.close();
-		clients.remove(client);
+		while(isOnline())
+		{
+			try {
+				Socket client = server.accept();
+				clients.add(client);
+				
+				PrintWriter w = new PrintWriter(client.getOutputStream());
+				BufferedOutputStream dataOut = new BufferedOutputStream(client.getOutputStream());
+				byte[] data = this.toByteArray(this.response);
+				
+				w.println("HTTP/1.1 200 OK");
+				w.println("Server: Java HTTP Webserver from MCTzOCK : 1.0");
+				w.println("Date: " + new Date());
+				w.println("Content-type: text/html");
+				w.println("Content-lenght: " + this.response.length());
+				w.println();
+				w.flush();
+				
+				dataOut.write(data);
+				dataOut.flush();
+				
+				w.close();
+				dataOut.close();
+				
+				client.close();
+				clients.remove(client);
+			}catch (Exception ex)
+			{
+				
+			}
+		}
 	}
 	
 	public byte[] toByteArray(String n) throws IOException 
